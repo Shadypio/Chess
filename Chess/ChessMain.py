@@ -32,10 +32,28 @@ def main():
     gs = ChessEngine.GameState()
     loadImages()
     running = True
+    sqSelected = () # Tiene traccia del clic dell'utente
+    playerClicks = [] # Tiene traccia dei clic dell'utente (due tuple: pezzo selezionato e destinazione)
     while running:
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
+            elif e.type == p.MOUSEBUTTONDOWN:
+                location = p.mouse.get_pos()
+                col = location[0]//SQ_SIZE
+                row = location[1]//SQ_SIZE
+                if sqSelected == (row, col): # Se l'utente ha selezionato due volte la stessa casella
+                    sqSelected = () # Deseleziona
+                    playerClicks = []
+                else:
+                    sqSelected = (row, col)
+                    playerClicks.append(sqSelected)
+                if len(playerClicks) == 2: # Dopo il secondo clic
+                    move = ChessEngine.Move(playerClicks[0], playerClicks[1], gs.board)
+                    gs.makeMove(move)
+                    sqSelected = ()
+                    playerClicks = []
+
         drawGameState(screen, gs)
         clock.tick(MAX_FPS)
         p.display.flip()
