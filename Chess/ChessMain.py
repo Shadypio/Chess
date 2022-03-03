@@ -31,6 +31,9 @@ def main():
     screen.fill(p.Color("white"))
     gs = ChessEngine.GameState()
     loadImages()
+    gameIcon = p.image.load('images/wp.png')
+    p.display.set_icon(gameIcon)
+    p.display.set_caption("Chess")
     running = True
     sqSelected = () # Tiene traccia del clic dell'utente
     playerClicks = [] # Tiene traccia dei clic dell'utente (due tuple: pezzo selezionato e destinazione)
