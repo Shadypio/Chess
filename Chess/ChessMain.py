@@ -30,6 +30,8 @@ def main():
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
     gs = ChessEngine.GameState()
+    validMoves = gs.getValidMoves()
+    moveMade = False # Flag per una mossa compiuta
     loadImages()
     gameIcon = p.image.load('images/wp.png')
     p.display.set_icon(gameIcon)
@@ -37,6 +39,7 @@ def main():
     running = True
     sqSelected = () # Tiene traccia del clic dell'utente
     playerClicks = [] # Tiene traccia dei clic dell'utente (due tuple: pezzo selezionato e destinazione)
+
     while running:
         for e in p.event.get():
             if e.type == p.QUIT:
@@ -53,12 +56,20 @@ def main():
                     playerClicks.append(sqSelected)
                 if len(playerClicks) == 2: # Dopo il secondo clic
                     move = ChessEngine.Move(playerClicks[0], playerClicks[1], gs.board)
-                    gs.makeMove(move)
+                    #print(move.getChessNotation())
+                    if move in validMoves:
+                        gs.makeMove(move)
+                        moveMade = True
                     sqSelected = ()
                     playerClicks = []
             elif e.type == p.KEYDOWN:
                 if e.key == p.K_z: #annulla la mossa con Z
                     gs.undoMove()
+                    moveMade = True
+
+        if moveMade:
+            validMoves = gs.getValidMoves()
+            moveMade = False
 
         drawGameState(screen, gs)
         clock.tick(MAX_FPS)

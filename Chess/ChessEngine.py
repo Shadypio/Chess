@@ -16,10 +16,14 @@ class GameState():
             ["--", "--", "--", "--", "--", "--", "--", "--"],
             ["--", "--", "--", "--", "--", "--", "--", "--"],
             ["--", "--", "--", "--", "--", "--", "--", "--"],
-            ["--", "--", "--", "--", "--", "--", "--", "--"],
+            ["--", "--", "--", "--", "bp", "--", "--", "--"],
             ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
             ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"],
         ]
+        self.moveFunctions = {'p': self.getPawnMoves, 'R': self.getRookMoves,
+                              'N': self.getKnightMoves, 'Q': self.getQueenMoves,
+                              'K': self.getKingMoves, 'B': self.getBishopMoves}
+
         self.whiteToMove = True
         self.moveLog = []
 
@@ -43,6 +47,72 @@ class GameState():
             self.board[move.endRow][move.endCol] = move.pieceCaptured
             self.whiteToMove = not self.whiteToMove
 
+    '''
+    Mosse con scacco (con inchiodatura)
+    '''
+    def getValidMoves(self):
+        return self.getAllPossibleMoves() # Da modificare
+
+    '''
+    Mosse senza scacco (senza inchiodatura) 
+    '''
+    def getAllPossibleMoves(self):
+        moves = []
+        for r in range(len(self.board)): # Numero di righe
+            for c in range(len(self.board[r])): #Numero di colonne della riga r
+                turn = self.board[r][c][0]
+                if (turn == 'w' and self.whiteToMove) or (turn == 'b' and not self.whiteToMove): # Turno del bianco e muove un pezzo bianco
+                    piece = self.board[r][c][1]
+                    self.moveFunctions[piece](r, c, moves) # Chiama la funzione appropriata per ogni pezzo
+        return moves
+
+    '''
+    Genera le mosse del pedone
+    '''
+    def getPawnMoves(self, r, c, moves):
+        if self.whiteToMove:
+            if self.board[r-1][c] == "--": # Se la cella avanti è vuota
+                moves.append(Move((r, c), (r-1, c), self.board))
+                if r == 6 and self.board[r-2][c] == "--": # Se la seconda cella avanti è vuota
+                    moves.append(Move((r, c), (r-2, c), self.board))
+            if c-1 > 0: # Cattura a sinitra
+                if self.board[r-1][c-1][0] == 'b': # Pezzo nemico da catturare
+                    moves.append(Move((r, c), (r-1, c-1), self.board))
+            if c+1 < 7: # Cattura a destra
+                if self.board[r-1][c+1][0] == 'b': # Pezzo nemico da catturare
+                    moves.append(Move((r, c), (r-1, c+1), self.board))
+
+        else: # Pedone nero
+            pass
+    '''
+    Genera le mosse della torre
+    '''
+    def getRookMoves(self, r, c, moves):
+        pass
+
+    '''
+    Genera le mosse del cavallo
+    '''
+    def getKnightMoves(self, r, c, moves):
+        pass
+
+    '''
+    Genera le mosse della regina
+    '''
+    def getQueenMoves(self, r, c, moves):
+        pass
+
+    '''
+    Genera le mosse della regina
+    '''
+    def getBishopMoves(self, r, c, moves):
+        pass
+
+    '''
+    Genera le mosse della regina
+    '''
+    def getKingMoves(self, r, c, moves):
+        pass
 
 
 class Move():
@@ -62,6 +132,15 @@ class Move():
         self.endCol = endSq[1]
         self.pieceMoved = board[self.startRow][self.startCol]
         self.pieceCaptured = board[self.endRow][self.endCol]
+        self.moveID = self.startRow * 1000 + self.startCol * 100 + self.endRow * 10 + self.endCol
+
+    '''
+    Override del metodo equals
+    '''
+    def __eq__(self, other):
+        if isinstance(other, Move):
+            return self.moveID == other.moveID
+        return False
 
 
     def getChessNotation(self):
