@@ -23,11 +23,27 @@ class GameState():
         self.whiteToMove = True
         self.moveLog = []
 
+    '''
+    Prende una mossa e la esegue 
+    (Arrocco, promozione ed en-passant non funzionanti)
+    '''
     def makeMove(self, move):
         self.board[move.startRow][move.startCol] = "--"
         self.board[move.endRow][move.endCol] = move.pieceMoved
-        self.moveLog.append(move)
+        self.moveLog.append(move) #Registra la mossa
         self.whiteToMove = not self.whiteToMove
+
+    '''
+    Annulla la mossa precedente
+    '''
+    def undoMove(self):
+        if len(self.moveLog) != 0: # Deve essere stata fatta una mossa
+            move = self.moveLog.pop()
+            self.board[move.startRow][move.startCol] = move.pieceMoved
+            self.board[move.endRow][move.endCol] = move.pieceCaptured
+            self.whiteToMove = not self.whiteToMove
+
+
 
 class Move():
     # Mappa le chiavi ai valori
