@@ -31,14 +31,14 @@ def main():
     screen.fill(p.Color("white"))
     gs = ChessEngine.GameState()
     validMoves = gs.getValidMoves()
-    moveMade = False # Flag per una mossa compiuta
+    moveMade = False  # Flag per una mossa compiuta
     loadImages()
     gameIcon = p.image.load('images/wp.png')
     p.display.set_icon(gameIcon)
     p.display.set_caption("Chess")
     running = True
-    sqSelected = () # Tiene traccia del clic dell'utente
-    playerClicks = [] # Tiene traccia dei clic dell'utente (due tuple: pezzo selezionato e destinazione)
+    sqSelected = ()  # Tiene traccia del clic dell'utente
+    playerClicks = []  # Tiene traccia dei clic dell'utente (due tuple: pezzo selezionato e destinazione)
 
     while running:
         for e in p.event.get():
@@ -48,19 +48,19 @@ def main():
                 location = p.mouse.get_pos()
                 col = location[0]//SQ_SIZE
                 row = location[1]//SQ_SIZE
-                if sqSelected == (row, col): # Se l'utente ha selezionato due volte la stessa casella
+                if sqSelected == (row, col):  # Se l'utente ha selezionato due volte la stessa casella
                     sqSelected = () # Deseleziona
                     playerClicks = []
                 else:
                     sqSelected = (row, col)
                     playerClicks.append(sqSelected)
-                if len(playerClicks) == 2: # Dopo il secondo clic
+                if len(playerClicks) == 2:  # Dopo il secondo clic
                     move = ChessEngine.Move(playerClicks[0], playerClicks[1], gs.board)
                     print(move.getChessNotation())
                     if move in validMoves:
                         gs.makeMove(move)
                         moveMade = True
-                        sqSelected = () # Resetta i clic dell'utente
+                        sqSelected = ()  # Resetta i clic dell'utente
                         playerClicks = []
                     else:
                         playerClicks = [sqSelected]
@@ -81,8 +81,8 @@ def main():
 Gestisce la grafica di un certo GameState.
 '''
 def drawGameState(screen, gs):
-    drawBoard(screen) # Disegna le casella sulla scacchiera
-    drawPieces(screen, gs.board) # Disegna i pezzi sulle caselle
+    drawBoard(screen)  # Disegna le casella sulla scacchiera
+    drawPieces(screen, gs.board)  # Disegna i pezzi sulle caselle
 
 '''
 Disegna le caselle sulla scacchiera.

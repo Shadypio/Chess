@@ -26,6 +26,10 @@ class GameState():
 
         self.whiteToMove = True
         self.moveLog = []
+        self.whiteKingLocation = (7, 4)
+        self.blackKingLocation = (0, 4)
+        self.checkMate = False
+        self.staleMatae = False
 
     '''
     Prende una mossa e la esegue 
@@ -34,36 +38,94 @@ class GameState():
     def makeMove(self, move):
         self.board[move.startRow][move.startCol] = "--"
         self.board[move.endRow][move.endCol] = move.pieceMoved
-        self.moveLog.append(move) #Registra la mossa
+        self.moveLog.append(move)  # Registra la mossa
         self.whiteToMove = not self.whiteToMove
+        # Aggiorna la posizione del re, se necessario
+        if move.pieceMoved == 'wK':
+            self.whiteKingLocation = (move.endRow, move.endCol)
+        if move.pieceMoved == 'bK':
+            self.blackKingLocation = (move.endRow, move.endCol)
 
     '''
     Annulla la mossa precedente
     '''
     def undoMove(self):
-        if len(self.moveLog) != 0: # Deve essere stata fatta una mossa
+        if len(self.moveLog) != 0:  # Deve essere stata fatta una mossa
             move = self.moveLog.pop()
             self.board[move.startRow][move.startCol] = move.pieceMoved
             self.board[move.endRow][move.endCol] = move.pieceCaptured
             self.whiteToMove = not self.whiteToMove
+            # Aggiorna la posizione del re, se necessario
+            if move.pieceMoved == 'wK':
+                self.whiteKingLocation = (move.startRow, move.startCol)
+            if move.pieceMoved == 'bK':
+                self.blackKingLocation = (move.startRow, move.startCol)
 
     '''
     Mosse con scacco (con inchiodatura)
     '''
     def getValidMoves(self):
-        return self.getAllPossibleMoves() # Da modificare
+        # 1.) Generare tutte le mosse
+        moves = self.getAllPossibleMoves()
+
+        # 2.) Per ogni mossa, fai la mossa
+        for i in range(len(moves)-1, -1, -1):  # Quando rimuovi dalla lista, naviga all'indietro
+            self.makeMove(moves[i])
+
+            # 3.) Genera tutte le mosse dell'avversario
+            # 4.) Per ogni mossa avversario, verifica se attacca il re
+            self.whiteToMove = not self.whiteToMove
+            if self.inCheck():
+                # 5.) Se attacca il re, non è una mossa valida
+                moves.remove(moves[i])
+
+            self.whiteToMove = not self.whiteToMove
+            self.undoMove()
+
+        if len(moves) == 0:  # Scaccomatto o stallo
+            if self.inCheck():
+                self.checkMate = True
+                print("Checkmate")
+            else:
+                self.staleMate = True
+        else:
+            self.checkMatae = False
+            self.staleMate = False
+
+        return moves
+
+    '''
+    Verifica se il giocatore è sotto scacco
+    '''
+    def inCheck(self):
+        if self.whiteToMove:
+            return self.squareUnderAttack(self.whiteKingLocation[0], self.whiteKingLocation[1])
+        else:
+            return self.squareUnderAttack(self.blackKingLocation[0], self.blackKingLocation[1])
+    '''
+    Verifica se il nemico attacca la casa r, c
+    '''
+    def squareUnderAttack(self, r, c):
+        self.whiteToMove = not self.whiteToMove  # Cambia il turno
+        oppMoves = self.getAllPossibleMoves()
+        self.whiteToMove = not self.whiteToMove  # Cambia il turno
+        for move in oppMoves:
+            if move.endRow == r and move.endCol == c:  # La casa è sotto attacco
+                return True
+        return False
+
 
     '''
     Mosse senza scacco (senza inchiodatura) 
     '''
     def getAllPossibleMoves(self):
         moves = []
-        for r in range(len(self.board)): # Numero di righe
-            for c in range(len(self.board[r])): #Numero di colonne della riga r
+        for r in range(len(self.board)):  # Numero di righe
+            for c in range(len(self.board[r])):  # Numero di colonne della riga r
                 turn = self.board[r][c][0]
-                if (turn == 'w' and self.whiteToMove) or (turn == 'b' and not self.whiteToMove): # Turno del bianco e muove un pezzo bianco
+                if (turn == 'w' and self.whiteToMove) or (turn == 'b' and not self.whiteToMove):  # Turno del bianco e muove un pezzo bianco
                     piece = self.board[r][c][1]
-                    self.moveFunctions[piece](r, c, moves) # Chiama la funzione appropriata per ogni pezzo
+                    self.moveFunctions[piece](r, c, moves)  # Chiama la funzione appropriata per ogni pezzo
         return moves
 
     '''
@@ -71,15 +133,15 @@ class GameState():
     '''
     def getPawnMoves(self, r, c, moves):
         if self.whiteToMove:
-            if self.board[r-1][c] == "--": # Se la cella avanti è vuota
+            if self.board[r-1][c] == "--":  # Se la cella avanti è vuota
                 moves.append(Move((r, c), (r-1, c), self.board))
-                if r == 6 and self.board[r-2][c] == "--": # Se la seconda cella avanti è vuota
+                if r == 6 and self.board[r-2][c] == "--":  # Se la seconda cella avanti è vuota
                     moves.append(Move((r, c), (r-2, c), self.board))
             if c-1 > 0: # Cattura a sinitra
-                if self.board[r-1][c-1][0] == 'b': # Pezzo nemico da catturare
+                if self.board[r-1][c-1][0] == 'b':  # Pezzo nemico da catturare
                     moves.append(Move((r, c), (r-1, c-1), self.board))
             if c+1 < 7: # Cattura a destra
-                if self.board[r-1][c+1][0] == 'b': # Pezzo nemico da catturare
+                if self.board[r-1][c+1][0] == 'b':  # Pezzo nemico da catturare
                     moves.append(Move((r, c), (r-1, c+1), self.board))
 
         else: # Pedone nero
@@ -99,7 +161,7 @@ class GameState():
     Genera le mosse della torre
     '''
     def getRookMoves(self, r, c, moves):
-        directions = ((-1, 0), (0, -1), (1, 0), (0, 1)) # Sopra, sinistra, sotto, destra
+        directions = ((-1, 0), (0, -1), (1, 0), (0, 1))  # Sopra, sinistra, sotto, destra
         enemyColor = 'b' if self.whiteToMove else 'w'
         for d in directions:
             for i in range(1, 8):
