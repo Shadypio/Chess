@@ -56,14 +56,16 @@ def main():
                     playerClicks.append(sqSelected)
                 if len(playerClicks) == 2: # Dopo il secondo clic
                     move = ChessEngine.Move(playerClicks[0], playerClicks[1], gs.board)
-                    #print(move.getChessNotation())
+                    print(move.getChessNotation())
                     if move in validMoves:
                         gs.makeMove(move)
                         moveMade = True
-                    sqSelected = ()
-                    playerClicks = []
+                        sqSelected = () # Resetta i clic dell'utente
+                        playerClicks = []
+                    else:
+                        playerClicks = [sqSelected]
             elif e.type == p.KEYDOWN:
-                if e.key == p.K_z: #annulla la mossa con Z
+                if e.key == p.K_z:  # Annulla la mossa con Z
                     gs.undoMove()
                     moveMade = True
 

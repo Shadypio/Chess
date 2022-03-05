@@ -16,7 +16,7 @@ class GameState():
             ["--", "--", "--", "--", "--", "--", "--", "--"],
             ["--", "--", "--", "--", "--", "--", "--", "--"],
             ["--", "--", "--", "--", "--", "--", "--", "--"],
-            ["--", "--", "--", "--", "bp", "--", "--", "--"],
+            ["--", "--", "--", "--", "--", "--", "--", "--"],
             ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
             ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"],
         ]
@@ -83,42 +83,102 @@ class GameState():
                     moves.append(Move((r, c), (r-1, c+1), self.board))
 
         else: # Pedone nero
-            pass
+            if self.board[r + 1][c] == "--":  # Se la cella avanti è vuota
+                moves.append(Move((r, c), (r + 1, c), self.board))
+                if r == 1 and self.board[r + 2][c] == "--":  # Se la seconda cella avanti è vuota
+                    moves.append(Move((r, c), (r + 2, c), self.board))
+            if c - 1 >= 0:  # Cattura a sinitra
+                if self.board[r + 1][c - 1][0] == 'w':  # Pezzo nemico da catturare
+                    moves.append(Move((r, c), (r + 1, c - 1), self.board))
+            if c + 1 <= 7:  # Cattura a destra
+                if self.board[r + 1][c + 1][0] == 'w':  # Pezzo nemico da catturare
+                    moves.append(Move((r, c), (r + 1, c + 1), self.board))
+        # Aggiungere promozione pedone
+
     '''
     Genera le mosse della torre
     '''
     def getRookMoves(self, r, c, moves):
-        pass
+        directions = ((-1, 0), (0, -1), (1, 0), (0, 1)) # Sopra, sinistra, sotto, destra
+        enemyColor = 'b' if self.whiteToMove else 'w'
+        for d in directions:
+            for i in range(1, 8):
+                endRow = r + d[0] * i
+                endCol = c + d[1] * i
+                if 0 <= endRow < 8 and 0 <= endCol < 8:  # Sulla scacchiera
+                    endPiece = self.board[endRow][endCol]
+                    if endPiece == '--':  # Spazio vuoto valido
+                        moves.append(Move((r, c), (endRow, endCol), self.board))
+                    elif endPiece[0] == enemyColor:  # Pezzo nemico
+                        moves.append(Move((r, c), (endRow, endCol), self.board))
+                        break
+                    else:  # Pezzo amico
+                        break
+                else: # Fuori scacchiera
+                    break
 
     '''
     Genera le mosse del cavallo
     '''
     def getKnightMoves(self, r, c, moves):
-        pass
+        knightMoves = ((-2, -1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1))  # L
+        allyColor = 'w' if self.whiteToMove else 'b'
+        for m in knightMoves:
+            endRow = r + m[0]
+            endCol = c + m[1]
+            if 0 <= endRow < 8 and 0 <= endCol < 8:
+                endPiece = self.board[endRow][endCol]
+                if endPiece[0] != allyColor:  # Non è un pezzo amico (vuoto o pezzo nemico)
+                    moves.append(Move((r, c), (endRow, endCol), self.board))
 
     '''
     Genera le mosse della regina
     '''
     def getQueenMoves(self, r, c, moves):
-        pass
+        self.getRookMoves(r, c, moves)
+        self.getBishopMoves(r, c, moves)
 
     '''
-    Genera le mosse della regina
+    Genera le mosse dell'alfiere
     '''
     def getBishopMoves(self, r, c, moves):
-        pass
+        directions = ((-1, -1), (-1, 1), (1, -1), (1, 1))  # Diagonali
+        enemyColor = 'b' if self.whiteToMove else 'w'
+        for d in directions:
+            for i in range(1, 8):
+                endRow = r + d[0] * i
+                endCol = c + d[1] * i
+                if 0 <= endRow < 8 and 0 <= endCol < 8:  # Sulla scacchiera
+                    endPiece = self.board[endRow][endCol]
+                    if endPiece == '--':  # Spazio vuoto valido
+                        moves.append(Move((r, c), (endRow, endCol), self.board))
+                    elif endPiece[0] == enemyColor:  # Pezzo nemico
+                        moves.append(Move((r, c), (endRow, endCol), self.board))
+                        break
+                    else:  # Pezzo amico
+                        break
+                else:  # Fuori scacchiera
+                    break
 
     '''
-    Genera le mosse della regina
+    Genera le mosse del re
     '''
     def getKingMoves(self, r, c, moves):
-        pass
+        kingMoves = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1))  # Una casella adiacente
+        allyColor = 'w' if self.whiteToMove else 'b'
+        for i in range(8):
+            endRow = r + kingMoves[i][0]
+            endCol = c + kingMoves[i][1]
+            if 0 <= endRow < 8 and 0 <= endCol < 8:
+                endPiece = self.board[endRow][endCol]
+                if endPiece[0] != allyColor:  # Non è un pezzo amico (vuoto o pezzo nemico)
+                    moves.append(Move((r, c), (endRow, endCol), self.board))
 
 
 class Move():
     # Mappa le chiavi ai valori
     # chiave : valore
-    ranksToRows = {"1": 7, "2": 6, "3": 5, "4": 7,
+    ranksToRows = {"1": 7, "2": 6, "3": 5, "4": 4,
                    "5": 3, "6": 2, "7": 1, "8": 0}
     rowsToRanks = {v: k for k, v in ranksToRows.items()}
     filesToCols = {"a": 0, "b": 1, "c": 2, "d": 3,
