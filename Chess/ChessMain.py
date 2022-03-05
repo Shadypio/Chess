@@ -49,7 +49,7 @@ def main():
                 col = location[0]//SQ_SIZE
                 row = location[1]//SQ_SIZE
                 if sqSelected == (row, col):  # Se l'utente ha selezionato due volte la stessa casella
-                    sqSelected = () # Deseleziona
+                    sqSelected = ()  # Deseleziona
                     playerClicks = []
                 else:
                     sqSelected = (row, col)
@@ -101,7 +101,7 @@ def drawPieces(screen, board):
     for r in range(DIMENSION):
         for c in range(DIMENSION):
             piece = board[r][c]
-            if piece != "--": # Non è una cella vuota
+            if piece != "--":  # Non è una cella vuota
                 screen.blit(IMAGES[piece], p.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
 if __name__ == "__main__":

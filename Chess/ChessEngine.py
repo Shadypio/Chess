@@ -89,7 +89,7 @@ class GameState():
             else:
                 self.staleMate = True
         else:
-            self.checkMatae = False
+            self.checkMate = False
             self.staleMate = False
 
         return moves
@@ -137,19 +137,19 @@ class GameState():
                 moves.append(Move((r, c), (r-1, c), self.board))
                 if r == 6 and self.board[r-2][c] == "--":  # Se la seconda cella avanti è vuota
                     moves.append(Move((r, c), (r-2, c), self.board))
-            if c-1 > 0: # Cattura a sinitra
+            if c-1 > 0:  # Cattura a sinistra
                 if self.board[r-1][c-1][0] == 'b':  # Pezzo nemico da catturare
                     moves.append(Move((r, c), (r-1, c-1), self.board))
-            if c+1 < 7: # Cattura a destra
+            if c+1 < 7:  # Cattura a destra
                 if self.board[r-1][c+1][0] == 'b':  # Pezzo nemico da catturare
                     moves.append(Move((r, c), (r-1, c+1), self.board))
 
-        else: # Pedone nero
+        else:  # Pedone nero
             if self.board[r + 1][c] == "--":  # Se la cella avanti è vuota
                 moves.append(Move((r, c), (r + 1, c), self.board))
                 if r == 1 and self.board[r + 2][c] == "--":  # Se la seconda cella avanti è vuota
                     moves.append(Move((r, c), (r + 2, c), self.board))
-            if c - 1 >= 0:  # Cattura a sinitra
+            if c - 1 >= 0:  # Cattura a sinistra
                 if self.board[r + 1][c - 1][0] == 'w':  # Pezzo nemico da catturare
                     moves.append(Move((r, c), (r + 1, c - 1), self.board))
             if c + 1 <= 7:  # Cattura a destra
@@ -176,7 +176,7 @@ class GameState():
                         break
                     else:  # Pezzo amico
                         break
-                else: # Fuori scacchiera
+                else:  # Fuori scacchiera
                     break
 
     '''
@@ -270,4 +270,3 @@ class Move():
 
     def getRankFile(self, r, c):
         return self.colsToFiles[c] + self.rowsToRanks[r]
-
