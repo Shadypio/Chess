@@ -47,7 +47,6 @@ def main():
 
     while running:
         humanTurn = (gs.whiteToMove and playerOne) or (not gs.whiteToMove and playerTwo)
-
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
@@ -89,7 +88,10 @@ def main():
 
         # Ricerca mosse AI
         if not gameOver and not humanTurn:
-            AIMove = SmartMoveFinder.findRandomMove(validMoves)
+            AIMove = SmartMoveFinder.findBestMove(gs, validMoves)
+            if AIMove is None:
+                AIMove = SmartMoveFinder.findRandomMove(validMoves)
+
             gs.makeMove(AIMove)
             moveMade = True
             animate = True
