@@ -172,7 +172,6 @@ class GameState():
         if len(moves) == 0:  # Scaccomatto o stallo
             if self.inCheck():
                 self.checkMate = True
-                print("Checkmate")
             else:
                 self.staleMate = True
         else:
