@@ -42,7 +42,7 @@ def main():
     playerClicks = []  # Tiene traccia dei clic dell'utente (due tuple: pezzo selezionato e destinazione)
     gameOver = False
     # Utente e Computer
-    playerOne = True  # Se l'utente gioca il bianco la variabile è True, altrimenti False
+    playerOne = False  # Se l'utente gioca il bianco la variabile è True, altrimenti False
     playerTwo = False  # Uguale a playerOne
 
     while running:
