@@ -44,9 +44,12 @@ def findBestMove(gs, validMoves):
 '''
 Ritorna la mossa migliore in base al materiale (Algoritmo Minimax ricorsivo)
 '''
-def findBestMoveMiniMax(gs, validMoves):
+def findBestMove(gs, validMoves):
     global nextMove
-    findMoveMiniMax(gs, validMoves, DEPTH, gs.whiteToMove)
+    nextMove = None
+    random.shuffle(validMoves)
+    # findMoveMiniMax(gs, validMoves, DEPTH, gs.whiteToMove)
+    findMoveNegaMax(gs, validMoves, DEPTH, 1 if gs.whiteToMove else -1)
     return nextMove
 
 
@@ -80,6 +83,24 @@ def findMoveMiniMax(gs, validMoves, depth, whiteToMove):
                     nextMove = move
             gs.undoMove()
         return minScore
+
+def findMoveNegaMax(gs, validMoves, depth, turnMultiplier):
+    global nextMove
+    if depth == 0:
+        return turnMultiplier * scoreBoard(gs)
+
+    maxScore = -CHECKMATE
+    for move in validMoves:
+        gs.makeMove(move)
+        nextMoves = gs.getValidMoves()
+        score = -findMoveNegaMax(gs, nextMoves, depth-1, -turnMultiplier)
+        if score > maxScore:
+            maxScore = score
+            if depth == DEPTH:
+                nextMove = move
+        gs.undoMove()
+    return maxScore
+
 
 '''
 Un punteggio positivo è ottimo per il bianco, se negativo è ottimo per il nero

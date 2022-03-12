@@ -90,7 +90,7 @@ def main():
 
         # Ricerca mosse AI
         if not gameOver and not humanTurn:
-            AIMove = SmartMoveFinder.findBestMoveMiniMax(gs, validMoves)
+            AIMove = SmartMoveFinder.findBestMove(gs, validMoves)
             if AIMove is None:
                 AIMove = SmartMoveFinder.findRandomMove(validMoves)
 
