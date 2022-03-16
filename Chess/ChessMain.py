@@ -31,7 +31,7 @@ def main():
     screen = p.display.set_mode((BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT))
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
-    moveLogFont = p.font.SysFont("Arial", 12, False, False)
+    moveLogFont = p.font.SysFont("Arial", 14, False, False)
     gs = ChessEngine.GameState()
     validMoves = gs.getValidMoves()
     moveMade = False  # Flag per una mossa compiuta
@@ -150,14 +150,22 @@ def drawMoveLog(screen, gs, font):
     moveLogRect = p.Rect(BOARD_WIDTH, 0, MOVE_LOG_PANEL_WIDTH, MOVE_LOG_PANEL_HEIGHT)
     p.draw.rect(screen, p.Color('black'), moveLogRect)
     moveLog = gs.moveLog
-    moveTexts = moveLog
+    moveTexts = []
     for i in range(0, len(moveLog), 2):
-        moveString = i + 1
+        moveString = str(i//2 + 1) + ". " + str(moveLog[i].getChessNotation()) + " "
+        if i+1 < len(moveLog):
+            moveString += str(moveLog[i+1]) + "  "
+        moveTexts.append(moveString)
+
+    movesPerRow = 3
     padding = 5
     textY = padding
     lineSpacing = 2
-    for i in range(len(moveTexts)):
-        text = moveTexts[i].getChessNotation()
+    for i in range(0, len(moveTexts), movesPerRow):
+        text = ''
+        for j in range(movesPerRow):
+            if i + j < len(moveTexts):
+                text += moveTexts[i + j]
         textObject = font.render(text, True, p.Color('white'))
         textLocation = moveLogRect.move(padding, textY)
         screen.blit(textObject, textLocation)
