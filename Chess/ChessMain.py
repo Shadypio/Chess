@@ -2,7 +2,7 @@
 Questo file sarà responsabile della gestione degli input dell'utente mostrando il GameState
 corrente.
 """
-# Creare log moss
+# Creare log mosse
 
 import pygame as p
 from Chess import ChessEngine, SmartMoveFinder
