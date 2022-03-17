@@ -6,6 +6,7 @@ corrente.
 
 import pygame as p
 from Chess import ChessEngine, SmartMoveFinder
+from multiprocessing import Process, Queue
 
 WIDTH = HEIGHT = 512
 DIMENSION = 8
@@ -45,6 +46,9 @@ def main():
     # Utente e Computer
     playerOne = True  # Se gioca l'utente la variabile è True, altrimenti False
     playerTwo = False  # Uguale a playerOne
+    AIThinking = False
+    moveFinderProcess = None
+    moveUndone = False
 
     while running:
         humanTurn = (gs.whiteToMove and playerOne) or (not gs.whiteToMove and playerTwo)
@@ -62,7 +66,7 @@ def main():
                     else:
                         sqSelected = (row, col)
                         playerClicks.append(sqSelected)
-                    if len(playerClicks) == 2:  # Dopo il secondo clic
+                    if len(playerClicks) == 2 and humanTurn:  # Dopo il secondo clic
                         move = ChessEngine.Move(playerClicks[0], playerClicks[1], gs.board)
                         print(move.getChessNotation())
                         for i in range(len(validMoves)):
@@ -80,6 +84,11 @@ def main():
                     moveMade = True
                     animate = False
                     gameOver = False
+                    if AIThinking:
+                        moveFinderProcess.terminate()
+                        AIThinking = False
+                    moveUndone = True
+
                 if e.key == p.K_r:  # Resetta la scacchiera con R
                     gs = ChessEngine.GameState()
                     validMoves = gs.getValidMoves()
@@ -88,16 +97,27 @@ def main():
                     moveMade = False
                     animate = False
                     gameOver = False
+                    if AIThinking:
+                        moveFinderProcess.terminate()
+                        AIThinking = False
+                    moveUndone = True
 
         # Ricerca mosse AI
-        if not gameOver and not humanTurn:
-            AIMove = SmartMoveFinder.findBestMove(gs, validMoves)
-            if AIMove is None:
-                AIMove = SmartMoveFinder.findRandomMove(validMoves)
+        if not gameOver and not humanTurn and not moveUndone:
+            if not AIThinking:
+                AIThinking = True
+                returnQueue = Queue() # Sfruttata tra i thread per scambio dati
+                moveFinderProcess = Process(target=SmartMoveFinder.findBestMove, args=(gs, validMoves, returnQueue))
+                moveFinderProcess.start()
 
-            gs.makeMove(AIMove)
-            moveMade = True
-            animate = True
+            if not moveFinderProcess.is_alive():
+                AIMove = returnQueue.get()
+                if AIMove is None:
+                    AIMove = SmartMoveFinder.findRandomMove(validMoves)
+                gs.makeMove(AIMove)
+                moveMade = True
+                animate = True
+                AIThinking = False
 
         if moveMade:
             if animate:
@@ -105,6 +125,7 @@ def main():
             validMoves = gs.getValidMoves()
             moveMade = False
             animate: False
+            moveUndone = False
 
         drawGameState(screen, gs, validMoves, sqSelected)
 

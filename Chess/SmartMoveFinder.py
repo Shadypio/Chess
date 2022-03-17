@@ -108,13 +108,13 @@ Ritorna la mossa migliore in base al materiale (Algoritmo Minimax ricorsivo)
 '''
 
 
-def findBestMove(gs, validMoves):
+def findBestMove(gs, validMoves, returnQueue):
     global nextMove
     nextMove = None
     random.shuffle(validMoves)
     # findMoveMiniMax(gs, validMoves, DEPTH, gs.whiteToMove)
     findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
-    return nextMove
+    returnQueue.put(nextMove)
 
 
 def findMoveMiniMax(gs, validMoves, depth, whiteToMove):
