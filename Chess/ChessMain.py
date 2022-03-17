@@ -43,8 +43,8 @@ def main():
     playerClicks = []  # Tiene traccia dei clic dell'utente (due tuple: pezzo selezionato e destinazione)
     gameOver = False
     # Utente e Computer
-    playerOne = True  # Se l'utente gioca il bianco la variabile è True, altrimenti False
-    playerTwo = True  # Uguale a playerOne
+    playerOne = True  # Se gioca l'utente la variabile è True, altrimenti False
+    playerTwo = False  # Uguale a playerOne
 
     while running:
         humanTurn = (gs.whiteToMove and playerOne) or (not gs.whiteToMove and playerTwo)
