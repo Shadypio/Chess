@@ -6,11 +6,9 @@ corrente.
 import pygame as p
 from Chess import ChessEngine, SmartMoveFinder
 
-BOARD_WIDTH = BOARD_HEIGHT = 512
-MOVE_LOG_PANEL_WIDTH = 250
-MOVE_LOG_PANEL_HEIGHT = BOARD_HEIGHT
+WIDTH = HEIGHT = 512
 DIMENSION = 8
-SQ_SIZE = BOARD_HEIGHT // DIMENSION
+SQ_SIZE = HEIGHT // DIMENSION
 MAX_FPS = 15
 IMAGES = {}
 
@@ -28,10 +26,9 @@ Gestione dell'input dell'utente e aggiornamento della scacchiera.
 '''
 def main():
     p.init()
-    screen = p.display.set_mode((BOARD_WIDTH + MOVE_LOG_PANEL_WIDTH, BOARD_HEIGHT))
+    screen = p.display.set_mode((WIDTH, HEIGHT))
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
-    moveLogFont = p.font.SysFont("Arial", 14, False, False)
     gs = ChessEngine.GameState()
     validMoves = gs.getValidMoves()
     moveMade = False  # Flag per una mossa compiuta
@@ -58,7 +55,7 @@ def main():
                     location = p.mouse.get_pos()
                     col = location[0]//SQ_SIZE
                     row = location[1]//SQ_SIZE
-                    if sqSelected == (row, col) or col >= 8:  # Se l'utente ha selezionato due volte la stessa casella
+                    if sqSelected == (row, col):  # Se l'utente ha selezionato due volte la stessa casella
                         sqSelected = ()  # Deseleziona
                         playerClicks = []
                     else:
@@ -108,11 +105,17 @@ def main():
             moveMade = False
             animate: False
 
-        drawGameState(screen, gs, validMoves, sqSelected, moveLogFont)
+        drawGameState(screen, gs, validMoves, sqSelected)
 
-        if gs.checkMate or gs.staleMate:
+        if gs.checkMate:
             gameOver = True
-            drawEndGameText(screen, 'Stalemate' if gs.stalemate else 'Black wins by checkmate' if gs.whiteToMove else 'White wins by checkmate')
+            if gs.whiteToMove:
+                drawText(screen, 'Black wins by checkmate')
+            else:
+                drawText(screen, 'White wins by checkmate')
+        elif gs.staleMate:
+            gameOver = True
+            drawText(screen, 'Stalemate')
 
         clock.tick(MAX_FPS)
         p.display.flip()
@@ -137,39 +140,10 @@ def highlightSquares(screen, gs, validMoves, sqSelected):
 '''
 Gestisce la grafica di un certo GameState.
 '''
-def drawGameState(screen, gs, validMoves, sqSelected, moveLogFont):
+def drawGameState(screen, gs, validMoves, sqSelected):
     drawBoard(screen)  # Disegna le casella sulla scacchiera
     highlightSquares(screen, gs, validMoves, sqSelected)
     drawPieces(screen, gs.board)  # Disegna i pezzi sulle caselle
-    drawMoveLog(screen, gs, moveLogFont)
-
-'''
-Tiene traccia delle mosse
-'''
-def drawMoveLog(screen, gs, font):
-    moveLogRect = p.Rect(BOARD_WIDTH, 0, MOVE_LOG_PANEL_WIDTH, MOVE_LOG_PANEL_HEIGHT)
-    p.draw.rect(screen, p.Color('black'), moveLogRect)
-    moveLog = gs.moveLog
-    moveTexts = []
-    for i in range(0, len(moveLog), 2):
-        moveString = str(i//2 + 1) + ". " + str(moveLog[i].getChessNotation()) + " "
-        if i+1 < len(moveLog):
-            moveString += str(moveLog[i+1]) + "  "
-        moveTexts.append(moveString)
-
-    movesPerRow = 3
-    padding = 5
-    textY = padding
-    lineSpacing = 2
-    for i in range(0, len(moveTexts), movesPerRow):
-        text = ''
-        for j in range(movesPerRow):
-            if i + j < len(moveTexts):
-                text += moveTexts[i + j]
-        textObject = font.render(text, True, p.Color('white'))
-        textLocation = moveLogRect.move(padding, textY)
-        screen.blit(textObject, textLocation)
-        textY += textObject.get_height() + lineSpacing
 
 '''
 Disegna le caselle sulla scacchiera.
@@ -181,7 +155,6 @@ def drawBoard(screen):
         for c in range(DIMENSION):
             color = colors[((r+c) % 2)]
             p.draw.rect(screen, color, p.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
-
 '''
 Disegna i pezzi sulla scacchiera usando il GameState.board corrente
 Nota: la casella in alto a sinistra è sempre chiara.
@@ -213,19 +186,16 @@ def animateMove(move, screen, board, clock):
         p.draw.rect(screen, color, endSquare)
         # Disegna i pezzi catturati
         if move.pieceCaptured != '--':
-            if move.isEnPassantMove:
-                enPassantRow = move.endRow + 1 if move.pieceCaptured[0] == 'b' else move.endRow - 1
-                endSquare = p.Rect(move.endCol * SQ_SIZE, enPassantRow * SQ_SIZE, SQ_SIZE, SQ_SIZE)
             screen.blit(IMAGES[move.pieceCaptured], endSquare)
         # Disegna il pezzo in movimento
         screen.blit(IMAGES[move.pieceMoved], p.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
         p.display.flip()
         clock.tick(60)
 
-def drawEndGameText(screen, text):
+def drawText(screen, text):
     font = p.font.SysFont("Helvitica", 32, True, False)
     textObject = font.render(text, 0, p.Color('Gray'))
-    textLocation = p.Rect(0, 0, BOARD_WIDTH, BOARD_HEIGHT).move(BOARD_WIDTH / 2 - textObject.get_width() / 2, BOARD_HEIGHT / 2 - textObject.get_height() / 2)
+    textLocation = p.Rect(0, 0, WIDTH, HEIGHT).move(WIDTH/2 - textObject.get_width()/2, HEIGHT/2 - textObject.get_height()/2)
     screen.blit(textObject, textLocation)
     textObject = font.render(text, 0, p.Color("Black"))
     screen.blit(textObject, textLocation.move(2, 2))

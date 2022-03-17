@@ -32,7 +32,6 @@ class GameState():
         self.checkMate = False
         self.staleMate = False
         self.enPassantPossible = ()  # Coordinate della cella disponibile per en passant
-        self.enPassantPossibleLog = [self.enPassantPossible]
         self.currentCastlingRight = CastleRights(True, True, True, True)
         self.castleRightsLog = [CastleRights(self.currentCastlingRight.wks, self.currentCastlingRight.bks,
                                              self.currentCastlingRight.wqs, self.currentCastlingRight.bqs)]
@@ -74,8 +73,6 @@ class GameState():
                 self.board[move.endRow][move.endCol+1] = self.board[move.endRow][move.endCol-2]  # Muove la torre nella nuova casella
                 self.board[move.endRow][move.endCol-2] = '--'
 
-        self.enPassantPossibleLog.append(self.enPassantPossible)
-
         # Aggiorna diritto ad arrocco - se re o torre vengono mossi
         self.updateCastleRights(move)
         self.castleRightsLog.append(CastleRights(self.currentCastlingRight.wks, self.currentCastlingRight.bks,
@@ -99,9 +96,7 @@ class GameState():
             if move.isEnPassantMove:
                 self.board[move.endRow][move.endCol] = '--'
                 self.board[move.startRow][move.endCol] = move.pieceCaptured
-
-            self.enPassantPossibleLog.pop()
-            self.enPassantPossible = self.enPassantPossibleLog[-1]
+                self.enPassantPossible = (move.endRow, move.endCol)
             # Annulla un avanzamento di 2 case di un pedone
             if move.pieceMoved[1] == 'p' and abs(move.startRow - move.endRow) == 2:
                 self.enPassantPossible = ()
@@ -135,7 +130,6 @@ class GameState():
         elif move.pieceMoved == 'bK':
             self.currentCastlingRight.bks = False
             self.currentCastlingRight.bqs = False
-
         elif move.pieceMoved == 'wR':
             if move.startRow == 7:
                 if move.startCol == 0:  # Torre sinistra
@@ -147,20 +141,6 @@ class GameState():
                 if move.startCol == 0:  # Torre sinistra
                     self.currentCastlingRight.bqs = False
                 elif move.startCol == 7:  # Torre destra
-                    self.currentCastlingRight.bks = False
-
-        #Se una torre è catturata
-        if move.pieceCaptured == 'wR':
-            if move.endRow == 7:
-                if move.endCol == 0:
-                    self.currentCastlingRight.wqs = False
-                elif move.endCol == 7:
-                    self.currentCastlingRight.wks = False
-        elif move.pieceCaptured == 'bR':
-            if move.endRow == 0:
-                if move.endCol == 0:
-                    self.currentCastlingRight.bqs = False
-                elif move.endCol == 7:
                     self.currentCastlingRight.bks = False
 
 
@@ -365,16 +345,16 @@ class GameState():
         if (self.whiteToMove and self.currentCastlingRight.wks) or (not self.whiteToMove and self.currentCastlingRight.bks):
             self.getKingSideCastleMoves(r, c, moves)
         if (self.whiteToMove and self.currentCastlingRight.wqs) or (not self.whiteToMove and self.currentCastlingRight.bqs):
-            self.getQueenSideCastleMoves(r, c, moves, allyColor='w')
+            self.getQueenSideCastleMoves(r, c, moves)
 
     def getKingSideCastleMoves(self, r, c, moves):
         if self.board[r][c+1] == '--' and self.board[r][c+2] == '--':
             if not self.squareUnderAttack(r, c+1) and not self.squareUnderAttack(r, c+2):
                 moves.append(Move((r, c), (r, c+2), self.board, isCastleMove=True))
 
-    def getQueenSideCastleMoves(self, r, c, moves, allyColor):
-        if self.board[r][c-1] == '--' and self.board[r][c-2] == '--' and self.board[r][c-3] == '--' and \
-         not self.squareUnderAttack(r, c-1) and not self.squareUnderAttack(r, c-2):
+    def getQueenSideCastleMoves(self, r, c, moves):
+        if self.board[r][c-1] == '--' and self.board[r][c-2] == '--' and self.board[r][c-3 == '--']:
+            if not self.squareUnderAttack(r, c-1) and not self.squareUnderAttack(r, c-2):
                 moves.append(Move((r, c), (r, c-2), self.board, isCastleMove=True))
 
 class CastleRights():
@@ -401,14 +381,18 @@ class Move():
         self.endCol = endSq[1]
         self.pieceMoved = board[self.startRow][self.startCol]
         self.pieceCaptured = board[self.endRow][self.endCol]
-        self.pawnPromotion = self.pieceMoved[1] == 'p' and (self.endRow == 0 or self.endRow == 7)
-        self.isCastleMove = isCastleMove
+
+        # Promozione
+        self.isPawnPromotion = (self.pieceMoved == 'wp' and self.endRow == 0) or (self.pieceMoved == 'bp' and self.endRow == 7)
+
+        # En passant
         self.isEnPassantMove = isEnPassantMove
+        if self.isEnPassantMove:
+            self.pieceCaptured = 'wp' if self.pieceMoved == 'bp' else 'bp'
 
-        if isEnPassantMove:
-            self.pieceCaptured = 'bp' if self.pieceMoved == 'wp' else 'wp'
+        # Arrocco
+        self.isCastleMove = isCastleMove
 
-        self.isCapture = self.pieceCaptured = '--'
         self.moveID = self.startRow * 1000 + self.startCol * 100 + self.endRow * 10 + self.endCol
 
     '''
@@ -425,24 +409,3 @@ class Move():
 
     def getRankFile(self, r, c):
         return self.colsToFiles[c] + self.rowsToRanks[r]
-
-    def __str__(self):
-        # Arrocco
-        if self.castle:
-            return "O-O" if self.endCol == 6 else "O-O-O"
-
-        endSquare = self.getRankFile(self.endRow, self.endCol)
-
-        if self.pieceMoved[1] == 'p':
-            if self.isCapture:
-                return self.colsToFiles[self.startCol] + 'x' + endSquare
-            else:
-                return endSquare
-
-            # Promozione
-        # Modifiche
-
-        moveString = self.pieceMoved[1]
-        if self.isCapture:
-            moveString += 'x'
-        return moveString + endSquare
