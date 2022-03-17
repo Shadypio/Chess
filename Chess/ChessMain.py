@@ -4,6 +4,7 @@ corrente.
 """
 # Creare log mosse
 
+
 import pygame as p
 from Chess import ChessEngine, SmartMoveFinder
 
