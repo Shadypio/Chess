@@ -172,7 +172,24 @@ Disegna le caselle sulla scacchiera.
 '''
 def drawBoard(screen):
     global colors
-    colors = [p.Color("white"), p.Color("gray")]
+    #  Standard
+    colors = [p.Color("#e8ebef"), p.Color("#7d8796")]
+
+    #  Corallo
+    #  colors = [p.Color("#b1e4b9"), p.Color("#70a2a3")]
+
+    #  Dusk
+    #  colors = [p.Color("#ccb7ae"), p.Color("#706677")]
+
+    #  Marino
+    #  colors = [p.Color("#9dacff"), p.Color("#6f73d2")]
+
+    #  Smeraldo
+    #  colors = [p.Color("#adbd8f"), p.Color("#6f8f72")]
+
+    #  Sabbia
+    #  colors = [p.Color("#e3c16f"), p.Color("#b88b4a")]
+
     for r in range(DIMENSION):
         for c in range(DIMENSION):
             color = colors[((r+c) % 2)]
