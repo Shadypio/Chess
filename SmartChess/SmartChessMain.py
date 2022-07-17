@@ -101,4 +101,5 @@ board = random_board()
 score = stockfish(board, 1)
 print(score)
 board
+
 (split_dims(board))
