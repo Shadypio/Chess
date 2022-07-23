@@ -1,31 +1,13 @@
-'''import chess.pgn
-import chess.svg
-import random
-# Visualizzazione partita personale su chess.com
-
-def main():
-    myGame()
-    print("ciao")
-
-def myGame():
-    pgn = open("Matches/newplayernewbielol_vs_Shadypio_2022.03.18.pgn")
-    game = chess.pgn.read_game(pgn)
-
-    board = game.board()
-
-    for move in game.mainline_moves():
-        board.push(move)
-
-    board
-
-if __name__ == "__main__":
-    main()'''
-
-
 import chess
 import chess.engine
 import random
 import numpy
+import tensorflow.keras.models as models
+import tensorflow.keras.layers as layers
+import tensorflow.keras.utils as utils
+import tensorflow.keras.optimizers as optimizers
+import tensorflow.keras.callbacks as callbacks
+
 
 
 # this function will create our x (board)
@@ -43,6 +25,11 @@ def random_board(max_depth=200):
     return board
 
 # this function will create out f(x) (score)
+'''
+Using this code we can evaluate any chess position. A positive number “White is winning” or a negative number meaning 
+“Black is winning”. Using this function we can create a dataset that can evaluate a set of random positions. We can 
+then create a model that can use this information to evaluate future predictions.
+'''
 def stockfish(board, depth):
     with chess.engine.SimpleEngine.popen_uci('C:/Users/Enzuc/Documents/ChessEngine/stockfish_15_x64_avx2.exe') as sf:
         result = sf.analyse(board, chess.engine.Limit(depth=depth))
@@ -51,6 +38,11 @@ def stockfish(board, depth):
 
 # converts the board representation to something meaningful for the
 # neural network
+'''
+Now we need to convert the board representation to something meaningful.
+A 3d matrix of sizes 8 x 8 x 14 where 8x8 represents the board and the 14 represents the 7 different pieces.
+'''
+
 squares_index = {
     'a': 0,
     'b': 1,
@@ -96,10 +88,156 @@ def split_dims(board):
     return board3d
 
 
+def build_model(conv_size, conv_depth):
+  board3d = layers.Input(shape=(14, 8, 8))
 
-board = random_board()
-score = stockfish(board, 1)
-print(score)
-board
+  # adding the convolutional layers
+  x = board3d
+  for _ in range(conv_depth):
+    x = layers.Conv2D(filters=conv_size, kernel_size=3, padding='same', activation='relu')(x)
+  x = layers.Flatten()(x)
+  x = layers.Dense(64, 'relu')(x)
+  x = layers.Dense(1, 'sigmoid')(x)
 
-(split_dims(board))
+  return models.Model(inputs=board3d, outputs=x)
+
+
+'''
+Skip connections (residual network) will likely improve the model for deeper connections.
+If you want to test the residual model, check the code below.
+'''
+
+def build_model_residual(conv_size, conv_depth):
+  board3d = layers.Input(shape=(14, 8, 8))
+
+  # adding the convolutional layers
+  x = layers.Conv2D(filters=conv_size, kernel_size=3, padding='same')(board3d)
+  for _ in range(conv_depth):
+    previous = x
+    x = layers.Conv2D(filters=conv_size, kernel_size=3, padding='same')(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation('relu')(x)
+    x = layers.Conv2D(filters=conv_size, kernel_size=3, padding='same')(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Add()([x, previous])
+    x = layers.Activation('relu')(x)
+  x = layers.Flatten()(x)
+  x = layers.Dense(1, 'sigmoid')(x)
+
+  return models.Model(inputs=board3d, outputs=x)
+
+
+# model = build_model(32, 4)
+
+def get_dataset():
+	container = numpy.load('C:/Users/Enzuc/Desktop/dataset.npz')
+	b, v = container['b'], container['v']
+	v = numpy.asarray(v / abs(v).max() / 2 + 0.5, dtype=numpy.float32) # normalization (0 - 1)
+	return b, v
+
+
+'''x_train, y_train = get_dataset()
+x_train.transpose()
+print(x_train.shape)
+print(y_train.shape)
+
+
+from tensorflow.keras.callbacks import ModelCheckpoint
+model.compile(optimizer=optimizers.Adam(5e-4), loss='mean_squared_error')
+model.summary()
+checkpoint_filepath = '/tmp/checkpoint/'
+model_checkpointing_callback = ModelCheckpoint(
+    filepath = checkpoint_filepath,
+    save_best_only= True,
+)
+model.fit(x_train, y_train,
+          batch_size=2048,
+          epochs=1000,
+          verbose=1,
+          validation_split=0.1,
+          callbacks=[callbacks.ReduceLROnPlateau(monitor='loss', patience=10),
+                     callbacks.EarlyStopping(monitor='loss', patience=15, min_delta=1e-4),model_checkpointing_callback])
+
+model.save('model.h5')
+print("hello")'''
+
+'''
+Playing with the AI
+'''
+model = models.load_model('Models/myModel_23.h5')
+
+
+# used for the minimax algorithm
+def minimax_eval(board):
+    board3d = split_dims(board)
+    board3d = numpy.expand_dims(board3d, 0)
+    return model(board3d)[0][0]
+
+
+def minimax(board, depth, alpha, beta, maximizing_player):
+    if depth == 0 or board.is_game_over():
+        return minimax_eval(board)
+
+    if maximizing_player:
+        max_eval = -numpy.inf
+        for move in board.legal_moves:
+            board.push(move)
+            eval = minimax(board, depth - 1, alpha, beta, False)
+            board.pop()
+            max_eval = max(max_eval, eval)
+            alpha = max(alpha, eval)
+            if beta <= alpha:
+                break
+        return max_eval
+    else:
+        min_eval = numpy.inf
+        for move in board.legal_moves:
+            board.push(move)
+            eval = minimax(board, depth - 1, alpha, beta, True)
+            board.pop()
+            min_eval = min(min_eval, eval)
+            beta = min(beta, eval)
+            if beta <= alpha:
+                break
+        return min_eval
+
+
+# this is the actual function that gets the move from the neural network
+def get_ai_move(board, depth):
+    max_move = None
+    max_eval = -numpy.inf
+
+    for move in board.legal_moves:
+        board.push(move)
+        eval = minimax(board, depth - 1, -numpy.inf, numpy.inf, False)
+        board.pop()
+        if eval > max_eval:
+            max_eval = eval
+            max_move = move
+
+    return max_move
+
+
+# Testing code AI(white) vs Stockfish(black)
+board = chess.Board()
+from IPython.display import clear_output, display
+
+with chess.engine.SimpleEngine.popen_uci('C:/Users/Enzuc/Documents/ChessEngine/stockfish_15_x64_avx2.exe') as engine:
+    while True:
+        clear_output(wait=True)
+        move = get_ai_move(board, 1)
+        board.push(move)
+        print(f'\n{board}')
+        # In Jupyter
+        # display(board)
+        if board.is_game_over():
+            print('game_over')
+            break
+        move = engine.analyse(board, chess.engine.Limit(time=0.1), info=chess.engine.INFO_PV)['pv'][0]
+        board.push(move)
+        print(f'\n{board}')
+        # In Jupyter
+        # display(board)
+        if board.is_game_over():
+            print('game_over')
+            break
