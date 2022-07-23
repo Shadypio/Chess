@@ -62,7 +62,7 @@ piecePositionScores = {"N": knightScores, "Q": queenScores, "B": bishopScores, "
 
 CHECKMATE = 1000
 STALEMATE = 0
-DEPTH = 3
+DEPTH = 2
 
 '''
 Ritorna una mossa del tutto casuale
