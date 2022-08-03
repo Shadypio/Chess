@@ -1,4 +1,5 @@
 import random
+import timeit
 
 pieceScore = {"K": 0, "Q": 10, "R": 5, "B": 3, "N": 3, "p": 1}
 
@@ -113,7 +114,10 @@ def findBestMove(gs, validMoves, returnQueue):
     nextMove = None
     random.shuffle(validMoves)
     # findMoveMiniMax(gs, validMoves, DEPTH, gs.whiteToMove)
+    start = timeit.default_timer()
     findMoveNegaMaxAlphaBeta(gs, validMoves, DEPTH, -CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
+    stop = timeit.default_timer()
+    print('Time: ', stop - start)
     returnQueue.put(nextMove)
 
 
